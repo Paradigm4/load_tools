@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <errno.h>
 #include <vector>
@@ -213,7 +214,8 @@ int match_length(
   int strOffset) { 
 
   int i = 0; 
-  for(; i < patternLength && strOffset + i < strLength && pattern[i] == str[strOffset + i]; i++) 
+  if(patternLength > INT_MAX || strLength > INT_MAX) throw SYSTEM_EXCEPTION(SCIDB_SE_INTERNAL, SCIDB_LE_ILLEGAL_OPERATION) << "string too long";
+  for(; i < (int)patternLength && strOffset + i < (int)strLength && pattern[i] == str[strOffset + i]; i++) 
     {}
 
   return i;
@@ -221,7 +223,8 @@ int match_length(
 
 int find_next(const char* str, size_t strLen, int offset, char nextChar) { 
   int i = 0;
-  for(i = offset; i < strLen; i++) { 
+  if(strLen > INT_MAX) throw SYSTEM_EXCEPTION(SCIDB_SE_INTERNAL, SCIDB_LE_ILLEGAL_OPERATION) << "string too long";
+  for(i = offset; i < (int)strLen; i++) { 
     if(str[i] == nextChar) { return i; }
   }
 
@@ -234,8 +237,10 @@ int find_first_pattern_match(
   const char* str, 
   size_t strLength) { 
 
-  for(int i = 0; i < strLength; i++) { 
-    if(match_length(pattern, patternLength, str, strLength, i) == patternLength) { 
+  if(strLength > INT_MAX) throw SYSTEM_EXCEPTION(SCIDB_SE_INTERNAL, SCIDB_LE_ILLEGAL_OPERATION) << "string too long";
+  if(patternLength > INT_MAX) throw SYSTEM_EXCEPTION(SCIDB_SE_INTERNAL, SCIDB_LE_ILLEGAL_OPERATION) << "string too long";
+  for(int i = 0; i < (int)strLength; i++) { 
+    if(match_length(pattern, patternLength, str, strLength, i) == (int)patternLength) { 
       return i;
     }
   }
@@ -311,11 +316,13 @@ static void extract_format_field( const Value **args, Value* res, void*) {
     int index = 0;
     int j = 0, k = 0;
     bool match = false;
-    for(; j < formatLen && !match; j += k) { 
+    if(formatLen > INT_MAX) throw SYSTEM_EXCEPTION(SCIDB_SE_INTERNAL, SCIDB_LE_ILLEGAL_OPERATION) << "string too long";
+    if(attrLen > INT_MAX) throw SYSTEM_EXCEPTION(SCIDB_SE_INTERNAL, SCIDB_LE_ILLEGAL_OPERATION) << "string too long";
+    for(; j < (int)formatLen && !match; j += k) { 
       if(formatField[j] == ':') { index++; j++; }
       match = true;
-      for(k = 0; j+k < formatLen && formatField[j+k] != ':'; k++) { 
-        if(k >= attrLen || formatField[j+k] != attrName[k]) { match = false; }
+      for(k = 0; j+k < (int)formatLen && formatField[j+k] != ':'; k++) { 
+        if(k >= (int)attrLen || formatField[j+k] != attrName[k]) { match = false; }
       }
     }
 
@@ -326,14 +333,15 @@ static void extract_format_field( const Value **args, Value* res, void*) {
 
     int start = 0; 
     int indexi = 0;
-    for(; start < sampleLen && indexi < index; start++) { 
+    if(sampleLen > INT_MAX) throw SYSTEM_EXCEPTION(SCIDB_SE_INTERNAL, SCIDB_LE_ILLEGAL_OPERATION) << "string too long";
+    for(; start < (int)sampleLen && indexi < index; start++) { 
         if(sampleField[start] == ':') { 
             indexi += 1;
         }
     }
     
     int end = start+1;
-    for(; end < sampleLen && sampleField[end] != ':'; end += 1) 
+    for(; end < (int)sampleLen && sampleField[end] != ':'; end += 1) 
         {}
 
     size_t size = end - start + 1;
