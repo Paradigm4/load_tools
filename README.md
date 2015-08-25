@@ -3,6 +3,18 @@ load_tools
 
 Tools for efficient and error-tolerant loading of character-delimited data into SciDB. This work is currently in prototype phase.
 
+## Important: use with different SciDB versions
+As of SciDB version 15.7, the load_tools package has been added to the source code as a prototype package. Users of 15.7 no longer need to install the package separately.
+
+#### If you are running SciDB 15.7, simply execute the following AFL:
+```
+AFL% load_library('prototype_load_tools');
+```
+After that, all of the functions and operators below will be usable as documented below.
+
+If you are using the earlier SciDB 14.12, follow the installation instructions at the bottom of this page.
+The code in this repository remains faithful to 14.12. This code will not build under 15.7. Moreover, this code will be removed at a later date as more users move on to 15.7 and later releases.
+
 ## Intro
 
 load_tools is a collection of load-related User-Defined Operators and Functions. The key component is the two-phase split-parse design. The input file (or fs object) is read by the split() operator and converted into simple large string chunks as fast as possible. Those chunks are simultaneously redistributed among all the instances in the cluster. The operator parse() can then be run in parallel to process the chunks into a set number of string attributes. The result of parse may be stored, or converted directly into the final form. The framework offers the following features:
