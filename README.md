@@ -3,7 +3,7 @@ load_tools
 
 Tools for efficient and error-tolerant loading of character-delimited data into SciDB. This work is currently in prototype phase.
 
-## Important: use with different SciDB versions
+## <a name="use_different_versions"></a>Important: use with different SciDB versions
 As of SciDB version 15.7, the load_tools package has been added to the source code as a prototype package. Users of 15.7 no longer need to install the package separately.
 
 #### If you are running SciDB 15.7, simply execute the following AFL:
@@ -289,7 +289,13 @@ For an example of using regular expressions, consult the regular expression subs
 
 ## Installing the plug in
 
-You'll need SciDB installed. The easiest way to install and load the plugin is by using https://github.com/paradigm4/dev_tools
+**NOTE**: As of SciDB version 15.7, you do not need to install load_tools separately (it is installed by default; see note [here](#use_different_versions))
+
+If you are using an older version of SciDB, read on:
+ 
+First, you'll need SciDB installed. 
+
+After that, the easiest way to install **load_tools**, and load the plugin is by using https://github.com/paradigm4/dev_tools
 
 Otherwise, you can build manually using the SciDB development header packages. The names vary depending on your operating system type, but they are the package that have "-dev" in the name. You *don't* need the SciDB source code to compile and install this.
 
