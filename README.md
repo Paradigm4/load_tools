@@ -41,6 +41,7 @@ random		3.1	"extra stuff"
 bill	abc	9
 alice	4	not_a_number
 ```
+> **NOTE**: If you want to follow along with this tutorial, create a copy of this file on your machine. Be careful to retain the tabs exactly as shown above (copying from the text above and pasting into your editor might not retain the same tabbing). Alternately, you can clone a gist containing this TSV file from [this link](https://gist.github.com/ksens/3b6e087c39f58a505ddb)
 
 ### Split
 Split reads from an absolute path (instance 0 only at the moment) and returns an array of 
