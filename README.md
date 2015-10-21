@@ -97,7 +97,17 @@ Must be specified in string form; see examples below
 
 The attribute "error" is always provided and populated with null, unless a particular line does not have the matching number of attributes:
 ```
-$ iquery -aq "store(parse(split('/tmp/testfile', 'lines_per_chunk=2'), 'num_attributes=3', 'chunk_size=2'), tmp)"
+$ iquery -aq "
+ store(
+  parse(
+   split(
+    '/tmp/testfile', 
+    'lines_per_chunk=2'
+   ), 
+   'num_attributes=3', 'chunk_size=2'
+  ), 
+ tmp
+)"
 {source_instance_id,chunk_no,line_no} a0,a1,a2,error
 {0,0,0} 'col1','col2','col3',null
 {0,0,1} '"alex"','1','3.5',null
@@ -117,7 +127,14 @@ Instead of creating an array with multiple attributes, we can create another dim
 ```
 where "NA" is the 'num_attributes' parameter as passed to the parse operator. Note, we use zero-based intexing and add one more value to contain the "error" status of each line. Indeed, this is just another way to represent the same data. It's very efficient for loading large matrix-like data where all, or most of the columns are the same type. For example, this form is very useful when loading large multi-sample VCF files. To split columns along a new dimension like this, supply the argument 'split_on_dimension=1' to parse like so:
 ```
-$ iquery -aq "parse(split('/tmp/testfile', 'lines_per_chunk=2'), 'num_attributes=3', 'split_on_dimension=1')"
+$ iquery -aq "
+ parse(
+  split(
+   '/tmp/testfile', 
+   'lines_per_chunk=2'
+  ), 
+  'num_attributes=3', 'split_on_dimension=1'
+ )"
 {source_instance_id,chunk_no,line_no,attribute_no} a
 {0,0,0,0} 'col1'
 {0,0,0,1} 'col2'
@@ -151,7 +168,18 @@ $ iquery -aq "parse(split('/tmp/testfile', 'lines_per_chunk=2'), 'num_attributes
 
 We can then use an operator like slice to pick out the first column. 
 ```
-$ iquery -aq "slice(parse(split('/tmp/testfile', 'lines_per_chunk=2'), 'num_attributes=3', 'split_on_dimension=1'), attribute_no, 0)"
+$ iquery -aq "
+ slice(
+  parse(
+   split(
+    '/tmp/testfile', 
+    'lines_per_chunk=2'
+   ), 
+   'num_attributes=3', 
+   'split_on_dimension=1'
+  ), 
+  attribute_no, 0
+ )"
 {source_instance_id,chunk_no,line_no} a
 {0,0,0} 'col1'
 {0,0,1} '"alex"'
@@ -175,7 +203,13 @@ $ iquery -aq "apply(filter(tmp, error is not null), original_line_number, 1+line
 ### dcast: error-tolerant casting
 The supplied UDF dcast can be used to cast a string to a double, float, bool, int{64,32,16,8} or uint{64,32,16,8} (at the moment). Note, the default casting in scidb will fail the query on first error. The second argument to dcast is the "default value" to use when the cast fails, usually a null or missing code. For example:
 ```
-$ iquery -aq "project(apply(filter(tmp, not (line_no=0 and chunk_no=0)), da2, dcast(a2, double(missing(1)))), a2, da2)"
+$ iquery -aq "
+ project(
+  apply(
+   filter(
+   tmp, not (line_no=0 and chunk_no=0)), 
+  da2, dcast(a2, double(missing(1)))), 
+ a2, da2)"
 {source_instance_id,chunk_no,line_no} a2,da2
 {0,0,1} '3.5',3.5
 {0,1,0} '4.8',4.8
@@ -191,7 +225,16 @@ dcast ignores any whitespace preceding or following the numeric value. When conv
 ### Some string utilities
 #### trim() removes specific characters from the beginning and end of a string:
 ```
-$ iquery -aq "project(apply(filter(tmp, not (line_no=0 and chunk_no=0)), ta0, trim(a0, '\"')), a0, ta0)"
+$ iquery -aq "
+ project(
+  apply(
+   filter(
+    tmp, 
+    not (line_no=0 and chunk_no=0)
+   ), 
+  ta0, trim(a0, '\"')), 
+ a0, ta0
+ )"
 {source_instance_id,chunk_no,line_no} a0,ta0
 {0,0,1} '"alex"','alex'
 {0,1,0} '"b"ob"','b"ob'
@@ -200,7 +243,17 @@ $ iquery -aq "project(apply(filter(tmp, not (line_no=0 and chunk_no=0)), ta0, tr
 {0,2,1} 'bill','bill'
 {0,3,0} 'alice','alice'
 
-$ iquery -aq "project(apply(filter(tmp, not (line_no=0 and chunk_no=0)), ta0, trim(a0, '\"b')), a0, ta0)"
+$ iquery -aq "
+ project(
+  apply(
+   filter(
+    tmp, 
+    not (line_no=0 and chunk_no=0)
+   ), 
+   ta0, trim(a0, '\"b')
+  ), 
+  a0, ta0
+ )"
 {source_instance_id,chunk_no,line_no} a0,ta0
 {0,0,1} '"alex"','alex'
 {0,1,0} '"b"ob"','o'
@@ -241,7 +294,17 @@ Note the benefit of using small cross_joins to decompose compound fields.
 The iif is present to overcome a limitation in SciDB's logic that determines when an attribute can be nullable,
 the iif can be skipped if you know exactly how many fields there are:
 ```
-$ iquery -aq "apply(cross_join(build(<val:string>[i=0:0,1,0], 'abc, def, xyz'), build(<x:int64>[j=0:3,4,0], j)), n, iif(nth_csv(val, j) is null, null, nth_csv(val,j)))"
+$ iquery -aq "
+ apply(
+  cross_join(
+   build(
+    <val:string>[i=0:0,1,0], 
+    'abc, def, xyz'), 
+   build(
+    <x:int64>[j=0:3,4,0], j)
+  ), 
+  n, iif(nth_csv(val, j) is null, null, nth_csv(val,j))
+ )"
 {i,j} val,x,n
 {0,0} 'abc, def, xyz',0,'abc'
 {0,1} 'abc, def, xyz',1,' def'
@@ -253,7 +316,13 @@ Similarly, maxlen_csv() and maxlen_tdv() first split a string along a delimiter 
 ####keyed_value() pulls values out of key-value lists
 It expects an input in the form of "KEY1=VALUE1;KEY2=VALUE2;.." and returns a value for a given key name. The third argument is a default to return when the key is not found:
 ```
-$ iquery -aq "apply(build(<val:string>[i=0:0,1,0], 'LEN=43;WID=35.3'), l, double(keyed_value(val, 'LEN', null)), w, double(keyed_value(val, 'WID', null)))"
+$ iquery -aq "
+ apply(
+  build(
+   <val:string>[i=0:0,1,0], 'LEN=43;WID=35.3'), 
+  l, double(keyed_value(val, 'LEN', null)), 
+  w, double(keyed_value(val, 'WID', null))
+ )"
 {i} val,l,w
 {0} 'LEN=43;WID=35.3',43,35.3
 ```
@@ -264,7 +333,17 @@ $ iquery -aq "apply(apply(build(<val:string>[i=0:0,1,0], 'LEN=43;WID=35.3'), l, 
 {i} val,l,w,input_check
 {0} 'LEN=43;WID=35.3',43,35.3,true
 
-$ iquery -aq "apply(apply(build(<val:string>[i=0:0,1,0], 'LEN=43;WID=35.3'), l, double(keyed_value(val, 'LEN', null)), w, double(keyed_value(val, 'WID', null))), input_check, iif(w < 30, true, throw('Invalid Width')))"
+$ iquery -aq "
+ apply(
+  apply(
+   build(
+    <val:string>[i=0:0,1,0], 'LEN=43;WID=35.3'
+   ), 
+   l, double(keyed_value(val, 'LEN', null)), 
+   w, double(keyed_value(val, 'WID', null))
+  ), 
+  input_check, iif(w < 30, true, throw('Invalid Width'))
+ )"
 SystemException in file: Functions.cpp function: toss line: 392
 Error id: scidb::SCIDB_SE_INTERNAL::SCIDB_LE_ILLEGAL_OPERATION
 Error description: Internal SciDB error. Illegal operation: Invalid Width
